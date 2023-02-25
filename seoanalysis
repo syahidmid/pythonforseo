@@ -1,0 +1,132 @@
+#@title Focus keyword checking { vertical-output: true }
+#@markdown Identifying the appearance of primary keywords in an article. Use https://arraythis.com/ to convert a list of keywords from table to comma delimited values.
+url_input = "https://lifepal.co.id/media/lampu-sorot-mobil/" #@param {type:"string"}
+keywords_input = "lampu sorot mobil " #@param {type:"string"}
+related_keywords_input = "lampu led bar mobil, lampu sorot adalah, lampu sorot halogen mobil, lampu sorot led, lampu sorot tembak, lampu spotlight adalah, lampu tambahan mobil, lampu tembak halogen, lampu tembak halogen mobil, cahaya lampu sorot, cara membuat lampu sorot jarak jauh, fungsi lampu sorot, harga lampu sorot jarak jauh, jenis lampu sorot, jenis lampu tembak" #@param {type:"string"}
+related_keywords_volume_input = ""  #@param {type:"string"}
+import re
+import requests
+from bs4 import BeautifulSoup
+from tabulate import tabulate
+from ipywidgets import widgets
+
+# URL halaman web yang akan di-scrape
+url = url_input
+primary_keyword = keywords_input
+related_keywords = related_keywords_input
+related_keywords_volume = related_keywords_volume_input
+
+
+def compare_seo_title_h1(h1, seo_title):
+    # Membandingkan SEO Title dengan H1
+    if seo_title.text == h1.text:
+        return ['SEO Title Compatibility with H1', 'True']
+    else:
+        return ['SEO Title Compatibility with H1', 'False']
+
+def compare_primary_keyword_seo_title(seo_title, primary_keyword):
+    # Membandingkan primary keyword dengan SEO Title
+    if re.search(primary_keyword, seo_title.text, re.IGNORECASE | re.DOTALL):
+        return ['Primary keyword are used in SEO Tittle', 'True']
+    else:
+        return ['Primary keyword are used in SEO Tittle', 'False']
+
+def compare_primary_keyword_h1(h1, primary_keyword):
+    if re.search(primary_keyword, h1.text, re.IGNORECASE | re.DOTALL):
+        return ['Primary keyword are used in H1', 'True']
+    else:
+        return ['Primary keyword are used in H1', 'False']
+
+
+def compare_primary_keyword_meta_description(meta_description, primary_keyword):
+  # Membandingkan primary keyword dengan meta description
+  if re.search(primary_keyword, meta_description, re.IGNORECASE | re.DOTALL):
+        return  ['Primary keyword are used in Meta Description', 'True']
+  else:
+        return ['Primary keyword are used in Meta Description','False']
+
+def compare_primary_keyword_first_paragraph(first_paragraph, primary_keyword):
+    # Membandingkan primary keyword dengan paragraf pertama
+    if re.search(primary_keyword, first_paragraph.text, re.IGNORECASE | re.DOTALL):
+        return ['Primary keyword are used in First Paragraph', 'True']
+    else:
+        return ['Primary keyword are used in First Paragraph', 'False']
+
+
+
+def count_seo_title(seo_title):
+    seo_title_length = len(seo_title.text)
+    if seo_title_length < 50:
+        return ['SEO Title length', f'The SEO title has a length of {seo_title_length}, which is too short']
+    elif seo_title_length > 60:
+        return ['SEO Title length', f'The SEO title has a length of {seo_title_length}, which is too long']
+    else:
+        return ['SEO Title length', f'The SEO title has a length of {seo_title_length}, which is good']
+
+def count_h1(h1_element):
+    h1_length = len(h1_element.text)
+    if h1_length < 50:
+        return ['H1 Title length', f'The H1 element has a length of {h1_length}, which is too short']
+    elif h1_length > 60:
+        return ['H1 Title length', f'TThe H1 element has a length of {h1_length}, which is too long']
+    else:
+        return ['H1 Title length', f'The H1 element has a length of {h1_length}, which is good']
+
+# Mengirim permintaan ke halaman web dan menyimpan respon dalam variabel 'response'
+response = requests.get(url)
+
+# Mengekstrak HTML dari respon
+html = response.text
+
+# Membuat objek Beautiful Soup dari HTML
+soup = BeautifulSoup(html, 'html.parser')
+
+# Mencari elemen 
+results = []
+h1_elements = soup.find_all('h1')
+# add the function in the existing code
+h1_elements = soup.find_all('h1')
+if h1_elements:
+    h1_element = h1_elements[0]
+    results.append(count_h1(h1_element))
+else:
+    results.append(['H1 Title length', 'Not found'])
+h1_element = soup.find_all('h1')[0]
+seo_title = soup.find('title')
+if seo_title:
+    results.append(count_seo_title(seo_title))
+else:
+    results.append(['SEO Title length', 'Not found'])
+meta = soup.find('meta', attrs={'name': 'description'})
+meta_description = meta['content']
+first_paragraph = soup.find('p')
+
+headings = soup.find_all(['h1', 'h2', 'h3'])
+
+ 
+
+
+
+# Menyimpan hasil dalam list
+results = []
+for h1 in h1_elements:
+    results.append(['URL', url])
+    results.append(['Primary key', primary_keyword])
+    results.append(['--------------------', '-----'])
+    results.append(['Heading 1', h1.text])
+    results.append(['SEO Title', seo_title.text])
+    results.append(['Meta Description', meta_description])
+    results.append(['--------------------', '-----'])
+    results.append(compare_seo_title_h1(h1, seo_title))
+    results.append(compare_primary_keyword_seo_title(seo_title, primary_keyword))
+    results.append(compare_primary_keyword_h1(h1_element, primary_keyword))
+    results.append(compare_primary_keyword_meta_description(meta_description,  primary_keyword))
+    results.append(compare_primary_keyword_first_paragraph(first_paragraph, primary_keyword))
+    results.append(['--------------------', '-----'])
+    results.append(count_seo_title(seo_title))
+    results.append(count_h1(h1_element))
+    
+
+
+# Menampilkan hasil dalam tabel
+print(tabulate(results, headers=['Item', 'Result'], tablefmt='orgtbl'))
